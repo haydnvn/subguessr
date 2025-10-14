@@ -22,6 +22,8 @@ import {
   getTopScores,
 } from "./game/utils";
 
+
+
 const app = express();
 
 // Middleware for JSON body parsing
@@ -130,7 +132,7 @@ router.post<
 
     let newChallenge;
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 3; // Reduced to 3 for faster response while still filtering
 
     // Keep generating challenges until we find one the user hasn't guessed on
     do {
