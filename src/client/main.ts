@@ -22,7 +22,6 @@ const shareButton = document.getElementById("share-btn") as HTMLButtonElement;
 const toggleLeaderboardButton = document.getElementById("toggle-leaderboard") as HTMLButtonElement;
 const leaderboardElement = document.getElementById("leaderboard") as HTMLDivElement;
 const leaderboardContent = document.getElementById("leaderboard-content") as HTMLDivElement;
-
 // Game State
 let currentPostId: string | null = null;
 let currentChallenge: any = null;

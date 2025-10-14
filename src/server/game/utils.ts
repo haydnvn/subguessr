@@ -1,14 +1,7 @@
 import { redis } from "@devvit/web/server";
 
-// Image-focused subreddits
-export const IMAGE_SUBREDDITS = [
-  'aww',
-  'pics', 
-  'funny',
-  'mildlyinteresting',
-  'cats',
-  'dogs'
-];
+// Import subreddits from generated file (built from subreddits.txt)
+export { IMAGE_SUBREDDITS } from './subreddits';
 
 // Helper functions for user score tracking
 export const getUserScoreKey = (userId: string) => `user_score_${userId}`;

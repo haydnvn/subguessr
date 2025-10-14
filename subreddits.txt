@@ -1,0 +1,42 @@
+# SubGuessr Subreddit List
+# Add one subreddit per line (without the r/ prefix)
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+
+# Funny subreddit
+maplestory
+okbuddyretard
+meirl
+okbuddyphd
+MemeEconomy
+WallStreetBets 
+
+# Popular image subreddits
+aww
+pics
+funny
+mildlyinteresting
+cats
+dogs
+earthporn
+mademesmile
+eyebleach
+cozyplaces
+
+# Additional image-focused subreddits (uncomment to enable)
+foodporn
+itookapicture
+photoshopbattles
+oldschoolcool
+wholesomememes
+animalsbeingderps
+oddlysatisfying
+interestingasfuck
+nextfuckinglevel
+damnthatsinteresting
+beamazed
+toptalent
+blackmagicfuckery
+perfecttiming
+satisfying
+mildlyinfuriating
