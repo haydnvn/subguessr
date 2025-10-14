@@ -22,13 +22,10 @@ export type GuessResponse = {
 };
 
 export type NewGameResponse = {
-  type: "newGame";
-  postId: string;
-  challengeData: {
-    imageUrl: string;
-    answer: string;
-    imageId: string;
-  };
+  status: "success";
+  message: string;
+  postId?: string;
+  navigateTo?: string;
 };
 
 export type LeaderboardResponse = {

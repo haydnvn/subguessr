@@ -52,7 +52,7 @@ async function initializeGame() {
           showResult(data.guessData.isCorrect, data.guessData.guess, currentChallenge.answer, true);
         }
       } else {
-        await loadNewChallenge();
+        showError("No challenge found for this post. This post may be corrupted or expired.");
       }
     }
   } catch (error) {
@@ -70,6 +70,11 @@ function displayChallenge() {
 
   challengeImageElement.src = currentChallenge.imageUrl;
   challengeImageElement.alt = "Challenge Image";
+  
+  // Re-apply image protection when new image loads
+  challengeImageElement.onload = () => {
+    disableImageInteractions();
+  };
 
   // Reset UI state
   guessSection.style.display = "block";
@@ -81,8 +86,8 @@ function displayChallenge() {
 // Load a new challenge
 async function loadNewChallenge() {
   try {
-    loadingElement.style.display = "block";
-    gameActiveElement.style.display = "none";
+    newGameButton.disabled = true;
+    newGameButton.textContent = "Creating...";
 
     const response = await fetch("/api/new-game", {
       method: "POST",
@@ -95,11 +100,19 @@ async function loadNewChallenge() {
     }
 
     const data = (await response.json()) as NewGameResponse;
-    currentChallenge = data.challengeData;
-    displayChallenge();
+
+    if (data.status === "success" && data.navigateTo) {
+      // Navigate to the new post
+      window.location.href = data.navigateTo;
+    } else {
+      throw new Error(data.message || "Failed to create new challenge");
+    }
   } catch (error) {
     console.error("Error loading new challenge:", error);
-    showError("Failed to load new challenge");
+    alert(`Failed to create new challenge: ${(error as Error).message}`);
+  } finally {
+    newGameButton.disabled = false;
+    newGameButton.textContent = "New Game";
   }
 }
 
@@ -277,5 +290,48 @@ newGameButton.addEventListener("click", loadNewChallenge);
 shareButton.addEventListener("click", shareChallenge);
 toggleLeaderboardButton.addEventListener("click", toggleLeaderboard);
 
+// Disable right-click and other ways to access image URL
+function disableImageInteractions() {
+  const challengeImage = document.getElementById("challenge-image") as HTMLImageElement;
+  
+  if (challengeImage) {
+    // Disable right-click context menu
+    challengeImage.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      return false;
+    });
+    
+    // Disable drag and drop
+    challengeImage.addEventListener("dragstart", (e) => {
+      e.preventDefault();
+      return false;
+    });
+    
+    // Disable selection
+    challengeImage.addEventListener("selectstart", (e) => {
+      e.preventDefault();
+      return false;
+    });
+  }
+}
+
+// Disable keyboard shortcuts that might reveal image info
+document.addEventListener("keydown", (e) => {
+  // Disable F12 (DevTools), Ctrl+Shift+I, Ctrl+U (View Source), etc.
+  if (
+    e.key === "F12" ||
+    (e.ctrlKey && e.shiftKey && e.key === "I") ||
+    (e.ctrlKey && e.shiftKey && e.key === "C") ||
+    (e.ctrlKey && e.key === "u") ||
+    (e.ctrlKey && e.key === "s")
+  ) {
+    e.preventDefault();
+    return false;
+  }
+});
+
 // Initialize the game when the page loads
 initializeGame();
+
+// Set up image protection after DOM is loaded
+document.addEventListener("DOMContentLoaded", disableImageInteractions);

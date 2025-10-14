@@ -19,7 +19,7 @@
   "menu": {
     "items": [
       {
-        "label": "Create What Sub Challenge",
+        "label": "Create SubGuessr Challenge",
         "description": "Create a new SubGuessr challenge post",
         "location": "subreddit",
         "forUserType": "moderator",

@@ -16,7 +16,7 @@ export const createPost = async () => {
       backgroundUri: challengeData.imageUrl, // Use the challenge image as background
       buttonLabel: 'Start Guessing',
       description: 'Can you guess which subreddit this image is from?',
-      heading: '🎯 What Sub Challenge',
+      heading: 'Play SubGuessr!',
       appIconUri: 'default-icon.png',
     },
     postData: {
@@ -24,7 +24,7 @@ export const createPost = async () => {
       version: '1.0'
     },
     subredditName: subredditName,
-    title: "🎯 What Sub Challenge - Can you guess this sub?",
+    title: "🎯 SubGuessr Challenge - Can you guess this sub?",
     url: challengeData.imageUrl, // Also set the main post image
   });
 
