@@ -13,7 +13,6 @@ import {
   redis,
 } from "@devvit/web/server";
 import { createPost } from "./core/post";
-import { generateNewChallenge } from "./game/challenge";
 import {
   getUserScore,
   hasUserGuessedOnImage,
@@ -53,12 +52,28 @@ router.get<
     const username = await reddit.getCurrentUsername();
     const userScore = userId ? await getUserScore(userId) : 0;
 
-    // Try to get existing challenge data for this post
+    // Always load the original challenge when "Start Guessing" is pressed
     let challengeData = null;
     let hasGuessed = false;
     let guessData = null;
 
-    const storedChallenge = await redis.get(`post_challenge_${postId}`);
+    // Always get the original challenge first
+    let originalChallenge = await redis.get(`post_original_challenge_${postId}`);
+
+    // Fallback to current challenge for backward compatibility
+    if (!originalChallenge) {
+      originalChallenge = await redis.get(`post_challenge_${postId}`);
+    }
+
+    // Reset the current challenge to the original challenge
+    if (originalChallenge) {
+      await redis.set(`post_challenge_${postId}`, originalChallenge, {
+        expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      });
+    }
+
+    let storedChallenge = originalChallenge;
+
     if (storedChallenge) {
       try {
         challengeData = JSON.parse(storedChallenge);
@@ -96,37 +111,73 @@ router.get<
 
 router.post<
   { postId: string },
-  { status: string; message: string; postId?: string; navigateTo?: string },
+  NewGameResponse | { status: string; message: string },
   unknown
 >("/api/new-game", async (_req, res): Promise<void> => {
-  const { subredditName } = context;
+  const { postId, userId } = context;
 
-  if (!subredditName) {
+  if (!postId) {
     res.status(400).json({
       status: "error",
-      message: "subredditName is required",
+      message: "postId is required",
     });
     return;
   }
 
   try {
-    // Create a new post with a new challenge instead of overwriting current post
-    const newPost = await createPost();
+    // Import the generateNewChallenge function
+    const { generateNewChallenge } = await import("./game/challenge");
+
+    let newChallenge;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    // Keep generating challenges until we find one the user hasn't guessed on
+    do {
+      newChallenge = await generateNewChallenge();
+      attempts++;
+
+      // If no userId, we can't check guess history, so use any challenge
+      if (!userId) {
+        break;
+      }
+
+      // Check if user has already guessed on this specific image
+      const alreadyGuessed = await hasUserGuessedOnImage(userId, newChallenge.imageUrl, newChallenge.answer);
+
+      // If they haven't guessed on this image, we can use it
+      if (!alreadyGuessed) {
+        break;
+      }
+
+      console.log(`User has already guessed on challenge ${attempts}, generating new one...`);
+
+    } while (attempts < maxAttempts);
+
+    // If we couldn't find a fresh challenge after max attempts, use the last one anyway
+    if (attempts >= maxAttempts) {
+      console.warn(`Could not find unguessed challenge after ${maxAttempts} attempts, using last generated challenge`);
+    }
+
+    // Update the current post's challenge data (but keep the original challenge intact)
+    await redis.set(`post_challenge_${postId}`, JSON.stringify(newChallenge), {
+      expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
 
     res.json({
       status: "success",
-      message: "New challenge created",
-      postId: newPost?.id,
-      navigateTo: `https://reddit.com/r/${subredditName}/comments/${newPost.id}`,
+      message: "New challenge loaded",
+      challengeData: newChallenge,
     });
   } catch (error) {
-    console.error(`Error creating new challenge post:`, error);
+    console.error(`Error generating new challenge for post ${postId}:`, error);
     res.status(500).json({
       status: "error",
-      message: "Failed to create new challenge",
+      message: "Failed to generate new challenge",
     });
   }
 });
+
 
 router.post<
   { postId: string },
@@ -279,18 +330,27 @@ router.post<
       },
       subredditName: subredditName,
       title: "🎯 SubGuessr Challenge - Can you guess this sub?",
-      url: imageUrl, // Also set the main post image
     });
 
     console.log("Created new post:", newPost?.id);
 
-    // Store the challenge ID in the post's metadata
+    // Store the challenge data in the post's metadata
     if (newPost?.id) {
-      await redis.set(`post_challenge_${newPost.id}`, JSON.stringify({
+      const challengeData = {
         imageUrl,
         answer,
         imageId: challengeId,
-      }), { expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
+      };
+
+      // Store as the original/canonical challenge for this post
+      await redis.set(`post_original_challenge_${newPost.id}`, JSON.stringify(challengeData), {
+        expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      });
+
+      // Also store as current challenge (for backward compatibility)
+      await redis.set(`post_challenge_${newPost.id}`, JSON.stringify(challengeData), {
+        expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      });
 
       console.log("Stored challenge data for post:", newPost.id);
     }

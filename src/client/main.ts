@@ -87,7 +87,7 @@ function displayChallenge() {
 async function loadNewChallenge() {
   try {
     newGameButton.disabled = true;
-    newGameButton.textContent = "Creating...";
+    newGameButton.textContent = "Loading...";
 
     const response = await fetch("/api/new-game", {
       method: "POST",
@@ -101,20 +101,29 @@ async function loadNewChallenge() {
 
     const data = (await response.json()) as NewGameResponse;
 
-    if (data.status === "success" && data.navigateTo) {
-      // Navigate to the new post
-      window.location.href = data.navigateTo;
+    if (data.status === "success" && data.challengeData) {
+      // Update the current challenge and display it
+      currentChallenge = data.challengeData;
+      displayChallenge();
+      
+      // Reset the game state
+      hasGuessed = false;
+      
+      // Show success message
+      alert("🎯 New challenge loaded!");
     } else {
-      throw new Error(data.message || "Failed to create new challenge");
+      throw new Error(data.message || "Failed to load new challenge");
     }
   } catch (error) {
     console.error("Error loading new challenge:", error);
-    alert(`Failed to create new challenge: ${(error as Error).message}`);
+    alert(`Failed to load new challenge: ${(error as Error).message}`);
   } finally {
     newGameButton.disabled = false;
     newGameButton.textContent = "New Game";
   }
 }
+
+
 
 // Submit a guess
 async function submitGuess() {

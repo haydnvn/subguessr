@@ -24,8 +24,11 @@ export type GuessResponse = {
 export type NewGameResponse = {
   status: "success";
   message: string;
-  postId?: string;
-  navigateTo?: string;
+  challengeData?: {
+    imageUrl: string;
+    answer: string;
+    imageId: string;
+  };
 };
 
 export type LeaderboardResponse = {
