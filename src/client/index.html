@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, height=device-height, user-scalable=0"
+    />
+    <title>SubGuessr - What Sub Challenge</title>
+  </head>
+  <body class="app">
+    <div class="game-container">
+      <!-- Header -->
+      <div class="header">
+        <h1 class="title">🎯 What Sub?</h1>
+        <div class="score-display">
+          <span id="username"></span> - Score: <span id="user-score">0</span>
+        </div>
+      </div>
+
+      <!-- Game Content -->
+      <div class="game-content" id="game-content">
+        <div class="loading" id="loading">
+          <p>Loading challenge...</p>
+        </div>
+        
+        <div class="game-active" id="game-active" style="display: none;">
+          <p class="description">Guess which subreddit this image is from!</p>
+          
+          <div class="image-container">
+            <img id="challenge-image" src="" alt="Challenge Image" />
+          </div>
+          
+          <div class="guess-section" id="guess-section">
+            <div class="input-group">
+              <label for="guess-input">r/</label>
+              <input type="text" id="guess-input" placeholder="aww" />
+              <button id="submit-guess">Guess</button>
+            </div>
+            <p class="hint">Examples: aww, pics, funny, cats, dogs</p>
+          </div>
+          
+          <div class="result-section" id="result-section" style="display: none;">
+            <div class="result-message" id="result-message"></div>
+            <div class="answer-display" id="answer-display"></div>
+            <div class="action-buttons">
+              <button id="new-game-btn" class="primary-btn">New Game</button>
+              <button id="share-btn" class="secondary-btn">Share Challenge</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard Toggle -->
+      <div class="leaderboard-toggle">
+        <button id="toggle-leaderboard">Show Leaderboard</button>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="leaderboard" id="leaderboard" style="display: none;">
+        <h3>🏆 Top Players</h3>
+        <div id="leaderboard-content"></div>
+      </div>
+    </div>
+    <script type="module" src="main.ts" defer></script>
+  </body>
+</html>
