@@ -269,6 +269,25 @@ router.get<
   }
 });
 
+router.get<
+  {},
+  { subreddits: string[] } | { status: string; message: string }
+>("/api/subreddits", async (_req, res): Promise<void> => {
+  try {
+    const { IMAGE_SUBREDDITS } = await import("./game/utils");
+    
+    res.json({
+      subreddits: IMAGE_SUBREDDITS,
+    });
+  } catch (error) {
+    console.error("Error fetching subreddits:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch subreddits",
+    });
+  }
+});
+
 router.post<
   { postId: string },
   { status: string; message: string; postId?: string },
@@ -364,13 +383,14 @@ router.post<
     });
   } catch (error) {
     console.error("Error sharing challenge - Full details:", error);
-    console.error("Error name:", (error as Error).name);
-    console.error("Error message:", (error as Error).message);
-    console.error("Error stack:", (error as Error).stack);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error name:", error instanceof Error ? error.name : 'Unknown');
+    console.error("Error message:", errorMessage);
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
 
     res.status(500).json({
       status: "error",
-      message: `Failed to share challenge: ${(error as Error).message}`,
+      message: `Failed to share challenge: ${errorMessage}`,
     });
   }
 });

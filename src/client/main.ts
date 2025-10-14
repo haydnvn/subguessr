@@ -27,10 +27,31 @@ let currentPostId: string | null = null;
 let currentChallenge: any = null;
 let hasGuessed = false;
 let showingLeaderboard = false;
+let availableSubreddits: string[] = [];
+let filteredSubreddits: string[] = [];
+let selectedSuggestionIndex = -1;
+
+// Load available subreddits for autocomplete
+async function loadSubreddits() {
+  try {
+    const response = await fetch("/api/subreddits");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    availableSubreddits = data.subreddits || [];
+  } catch (error) {
+    console.error("Error loading subreddits:", error);
+    availableSubreddits = [];
+  }
+}
 
 // Initialize the game
 async function initializeGame() {
   try {
+    // Load subreddits for autocomplete
+    await loadSubreddits();
+    
     const response = await fetch("/api/init");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -227,7 +248,8 @@ async function shareChallenge() {
 
   } catch (error) {
     console.error("Error sharing challenge:", error);
-    alert(`Failed to share challenge: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    alert(`Failed to share challenge: ${errorMessage}`);
   } finally {
     shareButton.disabled = false;
     shareButton.textContent = "Share Challenge";
@@ -287,12 +309,143 @@ function showError(message: string) {
   loadingElement.innerHTML = `<p style="color: red;">${message}</p>`;
 }
 
+// Autocomplete functionality
+function createSuggestionsContainer() {
+  let suggestionsContainer = document.getElementById("suggestions-container");
+  if (!suggestionsContainer) {
+    suggestionsContainer = document.createElement("div");
+    suggestionsContainer.id = "suggestions-container";
+    suggestionsContainer.className = "suggestions-container";
+    
+    // Find the input group container and append the suggestions there
+    const inputGroup = guessInput.closest('.input-group');
+    if (inputGroup) {
+      inputGroup.appendChild(suggestionsContainer);
+    } else {
+      guessInput.parentNode?.insertBefore(suggestionsContainer, guessInput.nextSibling);
+    }
+  }
+  return suggestionsContainer;
+}
+
+function filterSubreddits(input: string) {
+  const cleanInput = input.toLowerCase().replace(/^r\//, '').trim();
+  if (!cleanInput) {
+    filteredSubreddits = [];
+    return;
+  }
+  
+  filteredSubreddits = availableSubreddits
+    .filter(subreddit => subreddit.toLowerCase().includes(cleanInput))
+    .slice(0, 8); // Limit to 8 suggestions
+}
+
+function showSuggestions() {
+  const suggestionsContainer = createSuggestionsContainer();
+  
+  if (filteredSubreddits.length === 0) {
+    suggestionsContainer.style.display = "none";
+    return;
+  }
+  
+  // Position the suggestions container to align with the input field
+  const inputRect = guessInput.getBoundingClientRect();
+  const inputGroupRect = guessInput.closest('.input-group')?.getBoundingClientRect();
+  
+  if (inputGroupRect) {
+    const leftOffset = inputRect.left - inputGroupRect.left;
+    const rightOffset = inputGroupRect.right - inputRect.right;
+    
+    suggestionsContainer.style.left = `${leftOffset}px`;
+    suggestionsContainer.style.right = `${rightOffset}px`;
+  }
+  
+  const suggestionsHTML = filteredSubreddits
+    .map((subreddit, index) => 
+      `<div class="suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}" 
+           data-subreddit="${subreddit}">r/${subreddit}</div>`
+    )
+    .join('');
+  
+  suggestionsContainer.innerHTML = suggestionsHTML;
+  suggestionsContainer.style.display = "block";
+  
+  // Add click handlers to suggestions
+  suggestionsContainer.querySelectorAll('.suggestion-item').forEach((item, index) => {
+    item.addEventListener('click', () => {
+      selectSuggestion(index);
+    });
+  });
+}
+
+function hideSuggestions() {
+  const suggestionsContainer = document.getElementById("suggestions-container");
+  if (suggestionsContainer) {
+    suggestionsContainer.style.display = "none";
+  }
+  selectedSuggestionIndex = -1;
+}
+
+function selectSuggestion(index: number) {
+  if (index >= 0 && index < filteredSubreddits.length) {
+    guessInput.value = filteredSubreddits[index];
+    hideSuggestions();
+    guessInput.focus();
+  }
+}
+
+function handleKeyNavigation(e: KeyboardEvent) {
+  if (filteredSubreddits.length === 0) return;
+  
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, filteredSubreddits.length - 1);
+      showSuggestions();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+      showSuggestions();
+      break;
+    case 'Tab':
+    case 'Enter':
+      if (selectedSuggestionIndex >= 0) {
+        e.preventDefault();
+        selectSuggestion(selectedSuggestionIndex);
+      }
+      break;
+    case 'Escape':
+      hideSuggestions();
+      break;
+  }
+}
+
 // Event Listeners
 submitGuessButton.addEventListener("click", submitGuess);
 guessInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
+  if (e.key === "Enter" && selectedSuggestionIndex === -1) {
     submitGuess();
   }
+});
+guessInput.addEventListener("keydown", handleKeyNavigation);
+guessInput.addEventListener("input", (e) => {
+  const input = (e.target as HTMLInputElement).value;
+  filterSubreddits(input);
+  selectedSuggestionIndex = -1;
+  showSuggestions();
+});
+guessInput.addEventListener("focus", () => {
+  if (guessInput.value) {
+    filterSubreddits(guessInput.value);
+    showSuggestions();
+  }
+});
+guessInput.addEventListener("blur", (e) => {
+  // Delay hiding suggestions to allow clicking on them
+  setTimeout(() => {
+    hideSuggestions();
+  }, 150);
 });
 newGameButton.addEventListener("click", loadNewChallenge);
 shareButton.addEventListener("click", shareChallenge);
