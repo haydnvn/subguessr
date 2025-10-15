@@ -13,7 +13,6 @@ import {
   redis,
 } from "@devvit/web/server";
 import { createPost } from "./core/post";
-import { generateNewChallenge } from "./game/challenge";
 import {
   getUserScore,
   hasUserGuessedOnImage,
@@ -22,6 +21,8 @@ import {
   updateUserScore,
   getTopScores,
 } from "./game/utils";
+
+
 
 const app = express();
 
@@ -53,16 +54,32 @@ router.get<
     const username = await reddit.getCurrentUsername();
     const userScore = userId ? await getUserScore(userId) : 0;
 
-    // Try to get existing challenge data for this post
+    // Always load the original challenge when "Start Guessing" is pressed
     let challengeData = null;
     let hasGuessed = false;
     let guessData = null;
 
-    const storedChallenge = await redis.get(`post_challenge_${postId}`);
+    // Always get the original challenge first
+    let originalChallenge = await redis.get(`post_original_challenge_${postId}`);
+
+    // Fallback to current challenge for backward compatibility
+    if (!originalChallenge) {
+      originalChallenge = await redis.get(`post_challenge_${postId}`);
+    }
+
+    // Reset the current challenge to the original challenge
+    if (originalChallenge) {
+      await redis.set(`post_challenge_${postId}`, originalChallenge, {
+        expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      });
+    }
+
+    let storedChallenge = originalChallenge;
+
     if (storedChallenge) {
       try {
         challengeData = JSON.parse(storedChallenge);
-        
+
         // Check if user has already guessed on this challenge
         if (userId && challengeData) {
           hasGuessed = await hasUserGuessedOnImage(userId, challengeData.imageUrl, challengeData.answer);
@@ -99,7 +116,8 @@ router.post<
   NewGameResponse | { status: string; message: string },
   unknown
 >("/api/new-game", async (_req, res): Promise<void> => {
-  const { postId } = context;
+  const { postId, userId } = context;
+
   if (!postId) {
     res.status(400).json({
       status: "error",
@@ -109,17 +127,49 @@ router.post<
   }
 
   try {
-    const challengeData = await generateNewChallenge();
-    
-    // Store the challenge data for this post
-    await redis.set(`post_challenge_${postId}`, JSON.stringify(challengeData), {
+    // Import the generateNewChallenge function
+    const { generateNewChallenge } = await import("./game/challenge");
+
+    let newChallenge;
+    let attempts = 0;
+    const maxAttempts = 3; // Reduced to 3 for faster response while still filtering
+
+    // Keep generating challenges until we find one the user hasn't guessed on
+    do {
+      newChallenge = await generateNewChallenge();
+      attempts++;
+
+      // If no userId, we can't check guess history, so use any challenge
+      if (!userId) {
+        break;
+      }
+
+      // Check if user has already guessed on this specific image
+      const alreadyGuessed = await hasUserGuessedOnImage(userId, newChallenge.imageUrl, newChallenge.answer);
+
+      // If they haven't guessed on this image, we can use it
+      if (!alreadyGuessed) {
+        break;
+      }
+
+      console.log(`User has already guessed on challenge ${attempts}, generating new one...`);
+
+    } while (attempts < maxAttempts);
+
+    // If we couldn't find a fresh challenge after max attempts, use the last one anyway
+    if (attempts >= maxAttempts) {
+      console.warn(`Could not find unguessed challenge after ${maxAttempts} attempts, using last generated challenge`);
+    }
+
+    // Update the current post's challenge data (but keep the original challenge intact)
+    await redis.set(`post_challenge_${postId}`, JSON.stringify(newChallenge), {
       expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     });
 
     res.json({
-      type: "newGame",
-      postId,
-      challengeData,
+      status: "success",
+      message: "New challenge loaded",
+      challengeData: newChallenge,
     });
   } catch (error) {
     console.error(`Error generating new challenge for post ${postId}:`, error);
@@ -129,6 +179,7 @@ router.post<
     });
   }
 });
+
 
 router.post<
   { postId: string },
@@ -204,7 +255,7 @@ router.get<
 >("/api/leaderboard", async (_req, res): Promise<void> => {
   try {
     const leaderboard = await getTopScores(10);
-    
+
     res.json({
       type: "leaderboard",
       leaderboard,
@@ -214,6 +265,25 @@ router.get<
     res.status(500).json({
       status: "error",
       message: "Failed to fetch leaderboard",
+    });
+  }
+});
+
+router.get<
+  {},
+  { subreddits: string[] } | { status: string; message: string }
+>("/api/subreddits", async (_req, res): Promise<void> => {
+  try {
+    const { IMAGE_SUBREDDITS } = await import("./game/utils");
+    
+    res.json({
+      subreddits: IMAGE_SUBREDDITS,
+    });
+  } catch (error) {
+    console.error("Error fetching subreddits:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch subreddits",
     });
   }
 });
@@ -249,9 +319,9 @@ router.post<
   try {
     // Generate a unique key for this challenge
     const challengeId = `challenge_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-    
+
     console.log("Generated challengeId:", challengeId);
-    
+
     // Store the challenge data in Redis
     await redis.set(challengeId, JSON.stringify({
       imageUrl,
@@ -262,7 +332,7 @@ router.post<
 
     console.log("Creating new post with data:", {
       subredditName,
-      title: "Can you guess this sub? 🎯",
+      title: "🎯 SubGuessr Challenge - Can you guess this sub?",
       challengeId,
     });
 
@@ -272,7 +342,7 @@ router.post<
         backgroundUri: imageUrl, // Use the challenge image as background
         buttonLabel: 'Start Guessing',
         description: 'Can you guess which subreddit this image is from?',
-        heading: '🎯 What Sub Challenge',
+        heading: 'Play SubGuessr!',
         appIconUri: 'default-icon.png',
       },
       postData: {
@@ -280,20 +350,29 @@ router.post<
         shared: true,
       },
       subredditName: subredditName,
-      title: "Can you guess this sub? 🎯",
-      url: imageUrl, // Also set the main post image
+      title: "🎯 SubGuessr Challenge - Can you guess this sub?",
     });
 
     console.log("Created new post:", newPost?.id);
 
-    // Store the challenge ID in the post's metadata
+    // Store the challenge data in the post's metadata
     if (newPost?.id) {
-      await redis.set(`post_challenge_${newPost.id}`, JSON.stringify({
+      const challengeData = {
         imageUrl,
         answer,
         imageId: challengeId,
-      }), { expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
-      
+      };
+
+      // Store as the original/canonical challenge for this post
+      await redis.set(`post_original_challenge_${newPost.id}`, JSON.stringify(challengeData), {
+        expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      });
+
+      // Also store as current challenge (for backward compatibility)
+      await redis.set(`post_challenge_${newPost.id}`, JSON.stringify(challengeData), {
+        expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      });
+
       console.log("Stored challenge data for post:", newPost.id);
     }
 
@@ -304,13 +383,14 @@ router.post<
     });
   } catch (error) {
     console.error("Error sharing challenge - Full details:", error);
-    console.error("Error name:", (error as Error).name);
-    console.error("Error message:", (error as Error).message);
-    console.error("Error stack:", (error as Error).stack);
-    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error name:", error instanceof Error ? error.name : 'Unknown');
+    console.error("Error message:", errorMessage);
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+
     res.status(500).json({
       status: "error",
-      message: `Failed to share challenge: ${(error as Error).message}`,
+      message: `Failed to share challenge: ${errorMessage}`,
     });
   }
 });

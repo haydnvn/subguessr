@@ -22,9 +22,9 @@ export type GuessResponse = {
 };
 
 export type NewGameResponse = {
-  type: "newGame";
-  postId: string;
-  challengeData: {
+  status: "success";
+  message: string;
+  challengeData?: {
     imageUrl: string;
     answer: string;
     imageId: string;

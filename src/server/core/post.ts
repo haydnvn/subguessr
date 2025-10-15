@@ -16,7 +16,7 @@ export const createPost = async () => {
       backgroundUri: challengeData.imageUrl, // Use the challenge image as background
       buttonLabel: 'Start Guessing',
       description: 'Can you guess which subreddit this image is from?',
-      heading: '🎯 What Sub Challenge',
+      heading: 'Play SubGuessr!',
       appIconUri: 'default-icon.png',
     },
     postData: {
@@ -24,12 +24,17 @@ export const createPost = async () => {
       version: '1.0'
     },
     subredditName: subredditName,
-    title: "🎯 What Sub Challenge - Can you guess this sub?",
-    url: challengeData.imageUrl, // Also set the main post image
+    title: "🎯 SubGuessr Challenge - Can you guess this sub?",
   });
 
   // Store the challenge data for this post
   if (newPost?.id) {
+    // Store as the original/canonical challenge for this post
+    await redis.set(`post_original_challenge_${newPost.id}`, JSON.stringify(challengeData), {
+      expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
+    
+    // Also store as current challenge (for backward compatibility)
     await redis.set(`post_challenge_${newPost.id}`, JSON.stringify(challengeData), {
       expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     });

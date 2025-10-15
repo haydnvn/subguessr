@@ -1,0 +1,165 @@
+# SubGuessr Subreddit List
+# Add one subreddit per line (without the r/ prefix)
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+
+# Funny subreddit
+maplestory
+okbuddyretard
+meirl
+okbuddyphd
+MemeEconomy
+WallStreetBets 
+hmmm
+blursedimages
+cursedimages
+me_irl
+2meirl4meirl
+AdviceAnimals
+
+# Popular image subreddits
+aww
+pics
+funny
+mildlyinteresting
+cats
+dogs
+earthporn
+mademesmile
+eyebleach
+cozyplaces
+
+# Additional image-focused subreddits
+foodporn
+itookapicture
+photoshopbattles
+oldschoolcool
+wholesomememes
+animalsbeingderps
+oddlysatisfying
+interestingasfuck
+nextfuckinglevel
+damnthatsinteresting
+beamazed
+toptalent
+blackmagicfuckery
+perfecttiming
+satisfying
+mildlyinfuriating
+
+# Nature & Landscapes
+natureporn
+skyporn
+waterporn
+cityporn
+villageporn
+abandonedporn
+ruralporn
+botanicalporn
+geologyporn
+spaceporn
+
+# Animals
+AnimalsBeingBros
+rarepuppers
+Eyebleach
+hardcoreaww
+startledcats
+CatsStandingUp
+tuckedinkitties
+Blep
+whatswrongwithyourdog
+
+# Art & Design
+art
+digitalart
+imaginarylandscapes
+pixelart
+ImaginaryMonsters
+streetart
+DesignPorn
+RoomPorn
+AmateurRoomPorn
+minimalism
+
+# Photography
+analog
+ExposurePorn
+portraits
+streetphotography
+AbandonedPorn
+ArchitecturePorn
+MacroPorn
+ruralporn
+InfrastructurePorn
+
+# Memes & Humor
+dankmemes
+HistoryMemes
+starterpacks
+trippinthroughtime
+memes
+BikiniBottomTwitter
+PrequelMemes
+terriblefacebookmemes
+ComedyCemetery
+comedyheaven
+
+# Specific Interests
+evilbuildings
+submechanophobia
+thalassophobia
+Miniworlds
+wimmelbilder
+battlefield
+minipainting
+MechanicalKeyboards
+battlestations
+
+# Nostalgia & Vintage
+TheWayWeWere
+OldPhotosInRealLife
+ColorizedHistory
+historyporn
+VintageMenus
+nostalgia
+
+# DIY & Crafts
+crafts
+somethingimade
+woodworking
+pottery
+knitting
+crochet
+DIY
+BeforeNAfterAdoption
+Decks
+
+# Comics & Illustrations
+comics
+webcomics
+
+# Weird & Interesting
+hmmm
+Pareidolia
+confusing_perspective
+ATBGE
+DesirePath
+WeirdWings
+IRLEasterEggs
+Perfectfit
+
+# Aww-related
+Awwducational
+IllegallySmolCats
+SupermodelCats
+Chonkers
+AbsoluteUnits
+
+# Reddit Classics
+fakealbumcovers
+CrappyDesign
+assholedesign
+DesignPorn
+ExpectationVsReality
+Justrolledintotheshop
