@@ -22,6 +22,11 @@ const shareButton = document.getElementById("share-btn") as HTMLButtonElement;
 const toggleLeaderboardButton = document.getElementById("toggle-leaderboard") as HTMLButtonElement;
 const leaderboardElement = document.getElementById("leaderboard") as HTMLDivElement;
 const leaderboardContent = document.getElementById("leaderboard-content") as HTMLDivElement;
+const postStatsElement = document.getElementById("post-stats") as HTMLDivElement;
+const totalGuessesElement = document.getElementById("total-guesses") as HTMLSpanElement;
+const successRateElement = document.getElementById("success-rate") as HTMLSpanElement;
+const correctGuessesElement = document.getElementById("correct-guesses") as HTMLSpanElement;
+const incorrectGuessesElement = document.getElementById("incorrect-guesses") as HTMLSpanElement;
 // Game State
 let currentPostId: string | null = null;
 let currentChallenge: any = null;
@@ -67,6 +72,11 @@ async function initializeGame() {
         currentChallenge = data.challengeData;
         displayChallenge();
 
+        // Display post statistics
+        if (data.postStats) {
+          displayPostStats(data.postStats);
+        }
+
         // Check if user already guessed
         if (data.hasGuessed && data.guessData) {
           showResult(data.guessData.isCorrect, data.guessData.guess, currentChallenge.answer, true);
@@ -101,6 +111,9 @@ function displayChallenge() {
   resultSection.style.display = "none";
   guessInput.value = "";
   hasGuessed = false;
+  
+  // Reset stats visibility for new challenges
+  postStatsElement.classList.remove("visible");
 }
 
 // Load a new challenge
@@ -128,6 +141,9 @@ async function loadNewChallenge() {
       
       // Reset the game state
       hasGuessed = false;
+      
+      // Refresh post statistics for the new challenge
+      await refreshPostStats();
       
       // Show success message
       alert("🎯 New challenge loaded!");
@@ -177,6 +193,9 @@ async function submitGuess() {
 
     // Update score
     userScoreElement.textContent = data.newScore.toString();
+
+    // Refresh post statistics
+    await refreshPostStats();
 
     // Show result
     showResult(data.isCorrect, data.userGuess, data.correctAnswer, false);
@@ -307,6 +326,41 @@ function displayLeaderboard(leaderboard: any[]) {
 // Show error message
 function showError(message: string) {
   loadingElement.innerHTML = `<p style="color: red;">${message}</p>`;
+}
+
+// Display post statistics
+function displayPostStats(stats: any) {
+  if (!stats) return;
+  
+  totalGuessesElement.textContent = stats.totalGuesses.toString();
+  successRateElement.textContent = `${stats.successRate}%`;
+  correctGuessesElement.textContent = stats.correctGuesses.toString();
+  incorrectGuessesElement.textContent = stats.incorrectGuesses.toString();
+  
+  // Show the stats section with animation
+  postStatsElement.style.display = "block";
+  
+  // Trigger animation after a small delay to ensure display is set
+  setTimeout(() => {
+    postStatsElement.classList.add("visible");
+  }, 50);
+}
+
+// Refresh post statistics
+async function refreshPostStats() {
+  if (!currentPostId) return;
+  
+  try {
+    const response = await fetch("/api/init");
+    if (!response.ok) return;
+    
+    const data = await response.json();
+    if (data.postStats) {
+      displayPostStats(data.postStats);
+    }
+  } catch (error) {
+    console.error("Error refreshing post stats:", error);
+  }
 }
 
 // Autocomplete functionality

@@ -10,6 +10,12 @@ export type InitResponse = {
   };
   hasGuessed?: boolean;
   guessData?: any;
+  postStats?: {
+    totalGuesses: number;
+    correctGuesses: number;
+    incorrectGuesses: number;
+    successRate: number;
+  };
 };
 
 export type GuessResponse = {

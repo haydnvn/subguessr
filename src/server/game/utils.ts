@@ -90,3 +90,49 @@ export const getTopScores = async (limit: number = 10) => {
     };
   });
 };
+
+// Helper functions for tracking post-specific success/failure stats
+export const getPostStatsKey = (postId: string) => `post_stats_${postId}`;
+
+export const getPostStats = async (postId: string) => {
+  const statsKey = getPostStatsKey(postId);
+  const statsStr = await redis.get(statsKey);
+  
+  if (statsStr) {
+    try {
+      return JSON.parse(statsStr);
+    } catch (error) {
+      console.error('Error parsing post stats:', error);
+    }
+  }
+  
+  // Return default stats if none exist
+  return {
+    totalGuesses: 0,
+    correctGuesses: 0,
+    incorrectGuesses: 0,
+    successRate: 0
+  };
+};
+
+export const updatePostStats = async (postId: string, isCorrect: boolean) => {
+  const stats = await getPostStats(postId);
+  
+  stats.totalGuesses += 1;
+  if (isCorrect) {
+    stats.correctGuesses += 1;
+  } else {
+    stats.incorrectGuesses += 1;
+  }
+  
+  // Calculate success rate as percentage
+  stats.successRate = stats.totalGuesses > 0 
+    ? Math.round((stats.correctGuesses / stats.totalGuesses) * 100) 
+    : 0;
+  
+  const statsKey = getPostStatsKey(postId);
+  const expiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  await redis.set(statsKey, JSON.stringify(stats), { expiration });
+  
+  return stats;
+};

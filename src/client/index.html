@@ -28,6 +28,28 @@
         <div class="game-active" id="game-active" style="display: none;">
           <p class="description">Guess which subreddit this image is from!</p>
           
+          <!-- Post Statistics -->
+          <div class="post-stats" id="post-stats" style="display: none;">
+            <div class="stats-container">
+              <div class="stat-item">
+                <span class="stat-value" id="total-guesses">0</span>
+                <span class="stat-label">Total Guesses</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="success-rate">0%</span>
+                <span class="stat-label">Success Rate</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value correct" id="correct-guesses">0</span>
+                <span class="stat-label">Correct</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value incorrect" id="incorrect-guesses">0</span>
+                <span class="stat-label">Incorrect</span>
+              </div>
+            </div>
+          </div>
+          
           <div class="image-container">
             <img id="challenge-image" src="" alt="Challenge Image" />
           </div>

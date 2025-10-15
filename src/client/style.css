@@ -55,12 +55,19 @@
   color: var(--text-primary);
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   margin: 0;
-  padding: 8px;
+  padding: 6px;
   background-color: var(--bg-primary);
   overflow: hidden;
   transition: background-color 0.3s ease;
@@ -72,24 +79,25 @@
   max-width: 500px;
   margin: 0 auto;
   width: 100%;
-  gap: 8px;
+  gap: 6px;
   height: 100%;
+  overflow: hidden;
 }
 
 .header {
   text-align: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 2px 8px var(--shadow);
   flex-shrink: 0;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .title {
-  font-size: 1.4em;
+  font-size: 1.3em;
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .score-display {
@@ -100,15 +108,23 @@
 
 .game-content {
   background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 6px;
+  padding: 8px;
   box-shadow: 0 2px 8px var(--shadow);
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.game-active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .loading {
@@ -122,17 +138,18 @@
 
 .description {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
   color: var(--text-muted);
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
 
 .image-container {
   display: flex;
   justify-content: center;
-  margin: 8px 0;
-  height: 240px;
-  flex-shrink: 0;
+  margin: 2px 0;
+  flex: 1;
+  min-height: 180px;
+  max-height: 55vh;
 }
 
 .image-container img {
@@ -159,14 +176,15 @@
 }
 
 .guess-section {
-  margin: 8px 0;
+  margin: 2px 0;
   flex-shrink: 0;
+  min-height: 60px;
 }
 
 .input-group {
   display: flex;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   align-items: center;
   position: relative;
 }
@@ -217,14 +235,15 @@
 
 .result-section {
   text-align: center;
-  margin: 8px 0;
+  margin: 2px 0;
   flex-shrink: 0;
+  min-height: 80px;
 }
 
 .result-message {
-  font-size: 1em;
+  font-size: 0.95em;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .result-message.correct {
@@ -240,16 +259,16 @@
 }
 
 .answer-display {
-  margin: 6px 0;
-  font-size: 0.8em;
+  margin: 4px 0;
+  font-size: 0.75em;
   color: var(--text-muted);
 }
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .primary-btn, .secondary-btn {
@@ -283,12 +302,13 @@
 .leaderboard-toggle {
   text-align: center;
   flex-shrink: 0;
-  margin: 8px 0;
+  margin: 2px 0;
+  min-height: 35px;
 }
 
 .spacer {
-  flex: 1;
-  min-height: 20px;
+  flex: 0;
+  min-height: 4px;
 }
 
 .leaderboard-toggle button {
@@ -309,12 +329,13 @@
 
 .leaderboard {
   background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 6px;
+  padding: 8px;
   box-shadow: 0 2px 8px var(--shadow);
-  max-height: 200px;
+  max-height: 120px;
   overflow-y: auto;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  flex-shrink: 0;
 }
 
 .leaderboard h3 {
@@ -357,8 +378,35 @@
 
 /* Mobile responsiveness improvements */
 @media (max-width: 480px) {
+  .app {
+    padding: 4px;
+  }
+  
+  .game-container {
+    gap: 4px;
+  }
+  
   .title {
-    font-size: 1.2em;
+    font-size: 1.1em;
+  }
+  
+  .header {
+    padding: 4px 8px;
+  }
+  
+  .game-content {
+    padding: 6px;
+  }
+  
+  .image-container {
+    min-height: 150px;
+    max-height: 50vh;
+    margin: 1px 0;
+  }
+  
+  .description {
+    font-size: 0.8em;
+    margin-bottom: 2px;
   }
 }
 
@@ -414,4 +462,91 @@ input:focus {
 
 .suggestion-item.selected {
   font-weight: 600;
+}
+
+/* Post Statistics Styles */
+.post-stats {
+  margin: 2px 0;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.post-stats.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1px;
+}
+
+.stat-value.correct {
+  color: var(--success-color);
+}
+
+.stat-value.incorrect {
+  color: var(--error-color);
+}
+
+.stat-label {
+  font-size: 0.65em;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Mobile responsiveness for stats */
+@media (max-width: 480px) {
+  .stats-container {
+    padding: 4px;
+  }
+  
+  .stat-value {
+    font-size: 0.9em;
+  }
+  
+  .stat-label {
+    font-size: 0.6em;
+  }
+  
+  .post-stats {
+    margin: 2px 0;
+  }
+  
+  .guess-section {
+    min-height: 55px;
+  }
+  
+  .result-section {
+    min-height: 75px;
+  }
+  
+  .leaderboard-toggle {
+    min-height: 30px;
+  }
 }

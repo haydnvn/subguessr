@@ -20,6 +20,8 @@ import {
   recordUserImageGuess,
   updateUserScore,
   getTopScores,
+  getPostStats,
+  updatePostStats,
 } from "./game/utils";
 
 
@@ -92,6 +94,9 @@ router.get<
       }
     }
 
+    // Get post statistics
+    const postStats = await getPostStats(postId);
+
     res.json({
       type: "init",
       postId: postId,
@@ -100,6 +105,7 @@ router.get<
       challengeData,
       hasGuessed,
       guessData,
+      postStats,
     });
   } catch (error) {
     console.error(`API Init Error for post ${postId}:`, error);
@@ -221,6 +227,9 @@ router.post<
 
     // Record the user's guess for this specific image
     await recordUserImageGuess(userId, imageUrl, answer, cleanGuess, isCorrect);
+
+    // Update post statistics
+    await updatePostStats(postId, isCorrect);
 
     let newScore = await getUserScore(userId);
 
