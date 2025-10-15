@@ -177,10 +177,15 @@ router.post<
       expiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     });
 
+    // Get image statistics for the new challenge
+    const { getImageStats } = await import("./game/utils");
+    const imageStats = await getImageStats(newChallenge.imageUrl, newChallenge.answer);
+
     res.json({
       status: "success",
       message: "New challenge loaded",
       challengeData: newChallenge,
+      imageStats,
     });
   } catch (error) {
     console.error(`Error generating new challenge for post ${postId}:`, error);
@@ -298,6 +303,37 @@ router.get<
     res.status(500).json({
       status: "error",
       message: "Failed to fetch subreddits",
+    });
+  }
+});
+
+router.post<
+  {},
+  { imageStats: any } | { status: string; message: string },
+  { imageUrl: string; answer: string }
+>("/api/image-stats", async (req, res): Promise<void> => {
+  const { imageUrl, answer } = req.body;
+
+  if (!imageUrl || !answer) {
+    res.status(400).json({
+      status: "error",
+      message: "imageUrl and answer are required",
+    });
+    return;
+  }
+
+  try {
+    const { getImageStats } = await import("./game/utils");
+    const imageStats = await getImageStats(imageUrl, answer);
+
+    res.json({
+      imageStats,
+    });
+  } catch (error) {
+    console.error("Error fetching image stats:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch image stats",
     });
   }
 });

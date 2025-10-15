@@ -113,6 +113,10 @@ function displayChallenge() {
   guessInput.value = "";
   hasGuessed = false;
   
+  // Reset input validation state
+  guessInput.classList.remove('valid', 'invalid');
+  submitGuessButton.disabled = false;
+  
   // Reset stats visibility for new challenges
   postStatsElement.classList.remove("visible");
 }
@@ -143,8 +147,10 @@ async function loadNewChallenge() {
       // Reset the game state
       hasGuessed = false;
       
-      // Refresh post statistics for the new challenge
-      await refreshPostStats();
+      // Display image statistics for the new challenge
+      if (data.imageStats) {
+        displayPostStats(data.imageStats);
+      }
       
       // Show success message
       alert("🎯 New challenge loaded!");
@@ -162,6 +168,30 @@ async function loadNewChallenge() {
 
 
 
+// Validate if guess is in available subreddits
+function isValidSubreddit(guess: string): boolean {
+  const cleanGuess = guess.toLowerCase().replace(/^r\//, '').trim();
+  return availableSubreddits.some(subreddit => subreddit.toLowerCase() === cleanGuess);
+}
+
+// Update input validation visual feedback
+function updateInputValidation(input: string) {
+  const cleanInput = input.toLowerCase().replace(/^r\//, '').trim();
+  
+  // Remove existing validation classes
+  guessInput.classList.remove('valid', 'invalid');
+  submitGuessButton.disabled = false;
+  
+  if (cleanInput) {
+    if (isValidSubreddit(cleanInput)) {
+      guessInput.classList.add('valid');
+    } else {
+      guessInput.classList.add('invalid');
+      submitGuessButton.disabled = true;
+    }
+  }
+}
+
 // Submit a guess
 async function submitGuess() {
   if (!currentChallenge || hasGuessed) return;
@@ -169,6 +199,13 @@ async function submitGuess() {
   const guess = guessInput.value.toLowerCase().replace(/^r\//, '').trim();
   if (!guess) {
     alert("Please enter a subreddit name");
+    return;
+  }
+
+  // Validate that the guess is from the available subreddits list
+  if (!isValidSubreddit(guess)) {
+    alert("Please select a subreddit from the suggestions list. Only valid subreddits from our database are allowed.");
+    guessInput.focus();
     return;
   }
 
@@ -348,20 +385,28 @@ function displayPostStats(stats: any) {
   }, 50);
 }
 
-// Refresh post statistics
+// Refresh image statistics for current challenge
 async function refreshPostStats() {
-  if (!currentPostId || !currentChallenge) return;
+  if (!currentChallenge) return;
   
   try {
-    const response = await fetch("/api/init");
+    const response = await fetch("/api/image-stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageUrl: currentChallenge.imageUrl,
+        answer: currentChallenge.answer
+      })
+    });
+    
     if (!response.ok) return;
     
     const data = await response.json();
-    if (data.postStats) {
-      displayPostStats(data.postStats);
+    if (data.imageStats) {
+      displayPostStats(data.imageStats);
     }
   } catch (error) {
-    console.error("Error refreshing post stats:", error);
+    console.error("Error refreshing image stats:", error);
   }
 }
 
@@ -442,6 +487,7 @@ function selectSuggestion(index: number) {
   if (index >= 0 && index < filteredSubreddits.length) {
     guessInput.value = filteredSubreddits[index];
     hideSuggestions();
+    updateInputValidation(guessInput.value);
     guessInput.focus();
   }
 }
@@ -486,6 +532,9 @@ guessInput.addEventListener("input", (e) => {
   filterSubreddits(input);
   selectedSuggestionIndex = -1;
   showSuggestions();
+  
+  // Update visual feedback based on validation
+  updateInputValidation(input);
 });
 guessInput.addEventListener("focus", () => {
   if (guessInput.value) {

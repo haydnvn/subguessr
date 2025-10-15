@@ -35,6 +35,12 @@ export type NewGameResponse = {
     answer: string;
     imageId: string;
   };
+  imageStats?: {
+    totalGuesses: number;
+    correctGuesses: number;
+    incorrectGuesses: number;
+    successRate: number;
+  };
 };
 
 export type LeaderboardResponse = {
