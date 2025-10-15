@@ -22,6 +22,7 @@ const shareButton = document.getElementById("share-btn") as HTMLButtonElement;
 const toggleLeaderboardButton = document.getElementById("toggle-leaderboard") as HTMLButtonElement;
 const leaderboardElement = document.getElementById("leaderboard") as HTMLDivElement;
 const leaderboardContent = document.getElementById("leaderboard-content") as HTMLDivElement;
+const closeLeaderboardButton = document.getElementById("close-leaderboard") as HTMLButtonElement;
 const postStatsElement = document.getElementById("post-stats") as HTMLDivElement;
 const totalGuessesElement = document.getElementById("total-guesses") as HTMLSpanElement;
 const successRateElement = document.getElementById("success-rate") as HTMLSpanElement;
@@ -281,11 +282,9 @@ async function toggleLeaderboard() {
 
   if (showingLeaderboard) {
     await loadLeaderboard();
-    leaderboardElement.style.display = "block";
-    toggleLeaderboardButton.textContent = "Hide Leaderboard";
+    leaderboardElement.style.display = "flex";
   } else {
     leaderboardElement.style.display = "none";
-    toggleLeaderboardButton.textContent = "Show Leaderboard";
   }
 }
 
@@ -308,11 +307,14 @@ async function loadLeaderboard() {
 // Display leaderboard
 function displayLeaderboard(leaderboard: any[]) {
   if (leaderboard.length === 0) {
-    leaderboardContent.innerHTML = "<p>No scores yet! Be the first to play!</p>";
+    leaderboardContent.innerHTML = "<p style='text-align: center; color: var(--text-muted); padding: 20px;'>No scores yet! Be the first to play!</p>";
     return;
   }
 
-  const html = leaderboard.slice(0, 10).map(player => `
+  // Always show exactly top 10, pad with empty slots if needed
+  const top10 = leaderboard.slice(0, 10);
+  
+  const html = top10.map(player => `
     <div class="leaderboard-item ${player.rank <= 3 ? 'top-3' : ''}">
       <span class="rank">${player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : `${player.rank}.`}</span>
       <span class="username">${player.username}</span>
@@ -500,6 +502,21 @@ guessInput.addEventListener("blur", (e) => {
 newGameButton.addEventListener("click", loadNewChallenge);
 shareButton.addEventListener("click", shareChallenge);
 toggleLeaderboardButton.addEventListener("click", toggleLeaderboard);
+closeLeaderboardButton.addEventListener("click", toggleLeaderboard);
+
+// Close leaderboard when clicking outside the modal
+leaderboardElement.addEventListener("click", (e) => {
+  if (e.target === leaderboardElement) {
+    toggleLeaderboard();
+  }
+});
+
+// Close leaderboard with Escape key
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && showingLeaderboard) {
+    toggleLeaderboard();
+  }
+});
 
 // Disable right-click and other ways to access image URL
 function disableImageInteractions() {
