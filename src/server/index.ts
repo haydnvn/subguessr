@@ -22,6 +22,7 @@ import {
   getTopScores,
   getPostStats,
   updatePostStats,
+  updateImageStats,
 } from "./game/utils";
 
 
@@ -94,8 +95,12 @@ router.get<
       }
     }
 
-    // Get post statistics
-    const postStats = await getPostStats(postId);
+    // Get image statistics (tracks across all posts with this image)
+    let postStats = null;
+    if (challengeData) {
+      const { getImageStats } = await import("./game/utils");
+      postStats = await getImageStats(challengeData.imageUrl, challengeData.answer);
+    }
 
     res.json({
       type: "init",
@@ -228,8 +233,8 @@ router.post<
     // Record the user's guess for this specific image
     await recordUserImageGuess(userId, imageUrl, answer, cleanGuess, isCorrect);
 
-    // Update post statistics
-    await updatePostStats(postId, isCorrect);
+    // Update image statistics (tracks across all posts with this image)
+    await updateImageStats(imageUrl, answer, isCorrect);
 
     let newScore = await getUserScore(userId);
 

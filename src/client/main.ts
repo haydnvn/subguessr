@@ -348,7 +348,7 @@ function displayPostStats(stats: any) {
 
 // Refresh post statistics
 async function refreshPostStats() {
-  if (!currentPostId) return;
+  if (!currentPostId || !currentChallenge) return;
   
   try {
     const response = await fetch("/api/init");
@@ -402,17 +402,13 @@ function showSuggestions() {
     return;
   }
   
-  // Position the suggestions container to align with the input field
+  // Calculate optimal height based on viewport and position
   const inputRect = guessInput.getBoundingClientRect();
-  const inputGroupRect = guessInput.closest('.input-group')?.getBoundingClientRect();
+  const viewportHeight = window.innerHeight;
+  const spaceBelow = viewportHeight - inputRect.bottom;
+  const maxHeight = Math.min(160, Math.max(120, spaceBelow - 20)); // Leave 20px margin
   
-  if (inputGroupRect) {
-    const leftOffset = inputRect.left - inputGroupRect.left;
-    const rightOffset = inputGroupRect.right - inputRect.right;
-    
-    suggestionsContainer.style.left = `${leftOffset}px`;
-    suggestionsContainer.style.right = `${rightOffset}px`;
-  }
+  suggestionsContainer.style.maxHeight = `${maxHeight}px`;
   
   const suggestionsHTML = filteredSubreddits
     .map((subreddit, index) => 
