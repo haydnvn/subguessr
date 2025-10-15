@@ -3,6 +3,60 @@ import { redis } from "@devvit/web/server";
 // Import subreddits from generated file (built from subreddits.txt)
 export { IMAGE_SUBREDDITS } from './subreddits';
 
+// Post titles array - embedded directly for reliability
+const POST_TITLES: string[] = [
+  "Bet you can't name this sub!",
+  "Which corner of Reddit is this from?",
+  "Name that subreddit, I dare you!",
+  "Guess the sub or face eternal shame",
+  "Can you identify this Reddit rabbit hole?",
+  "What subreddit spawned this masterpiece?",
+  "Challenge accepted: Name this sub!",
+  "Riddle me this subreddit, Batman",
+  "Can you crack the subreddit code?",
+  "Which sub does this belong to, genius?",
+  "Subreddit detective work needed here",
+  "Name this sub and win absolutely nothing",
+  "Can you solve the mystery subreddit?",
+  "Guess correctly and earn my respect",
+  "Which Reddit community claims this?",
+  "Subreddit identification challenge activated",
+  "Can you pinpoint this sub's origin?",
+  "Name that subreddit like your life depends on it",
+  "Calling all subreddit sleuths!",
+  "Can you decode this Reddit enigma?",
+  "Which sub is responsible for this chaos?",
+  "Subreddit guessing game: EXTREME EDITION",
+  "Can you identify this digital habitat?",
+  "Name this sub before I lose my mind",
+  "Which corner of the internet is this?",
+  "Can you solve this subreddit puzzle?",
+  "Guess the sub and become a legend",
+  "Which Reddit realm does this hail from?",
+  "Can you name this virtual neighborhood?",
+  "Subreddit identification: Mission Impossible",
+  "Can you guess where this meme was born?",
+  "Which sub would upvote this madness?",
+  "Name that subreddit, you beautiful human",
+  "Can you identify this Reddit ecosystem?",
+  "Guess the sub and I'll be impressed",
+  "Which digital tribe created this?",
+  "Can you crack this subreddit mystery?",
+  "Name this sub or forever hold your peace",
+  "Which Reddit dimension is this from?",
+  "Test your subreddit knowledge here!"
+];
+
+// Function to get a random post title
+export const getRandomPostTitle = (): string => {
+  const randomIndex = Math.floor(Math.random() * POST_TITLES.length);
+  const randomTitle = POST_TITLES[randomIndex];
+  const fullTitle = `🎯 SubGuessr - ${randomTitle}`;
+  
+  console.log(`Selected title ${randomIndex + 1}/${POST_TITLES.length}: "${fullTitle}"`);
+  return fullTitle;
+};
+
 // Helper functions for user score tracking
 export const getUserScoreKey = (userId: string) => `user_score_${userId}`;
 export const getLeaderboardKey = () => 'leaderboard';

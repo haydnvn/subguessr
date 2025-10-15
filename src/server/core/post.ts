@@ -1,5 +1,6 @@
 import { context, reddit, redis } from "@devvit/web/server";
 import { generateNewChallenge } from "../game/challenge";
+import { getRandomPostTitle } from "../game/utils";
 
 export const createPost = async () => {
   const { subredditName } = context;
@@ -9,6 +10,7 @@ export const createPost = async () => {
 
   // Generate a challenge for the preview
   const challengeData = await generateNewChallenge();
+  const postTitle = getRandomPostTitle();
 
   const newPost = await reddit.submitCustomPost({
     splash: {
@@ -18,13 +20,16 @@ export const createPost = async () => {
       description: 'Can you guess which subreddit this image is from?',
       heading: 'Play SubGuessr!',
       appIconUri: 'default-icon.png',
+      buttonAppearance: 'secondary', // Try different button appearance
+      buttonColor: '#FF6B35', // Try custom orange color
+      buttonStyle: 'orange', // Try custom style
     },
     postData: {
       gameType: 'subguessr',
       version: '1.0'
     },
     subredditName: subredditName,
-    title: "🎯 SubGuessr Challenge - Can you guess this sub?",
+    title: postTitle,
   });
 
   // Store the challenge data for this post

@@ -36,6 +36,7 @@ let showingLeaderboard = false;
 let availableSubreddits: string[] = [];
 let filteredSubreddits: string[] = [];
 let selectedSuggestionIndex = -1;
+let sharedPostCache: Map<string, string> = new Map(); // Maps challenge key to post URL
 
 // Load available subreddits for autocomplete
 async function loadSubreddits() {
@@ -119,6 +120,9 @@ function displayChallenge() {
   
   // Reset stats visibility for new challenges
   postStatsElement.classList.remove("visible");
+  
+  // Clear share cache when displaying a new challenge
+  sharedPostCache.clear();
 }
 
 // Load a new challenge
@@ -271,6 +275,31 @@ async function shareChallenge() {
     return;
   }
 
+  // Create a unique key for this challenge
+  const challengeKey = `${currentChallenge.imageUrl}|${currentChallenge.answer}`;
+  
+  // Check if we already have a shared post for this challenge
+  const cachedUrl = sharedPostCache.get(challengeKey);
+  if (cachedUrl) {
+    // Just copy the existing URL to clipboard
+    try {
+      shareButton.disabled = true;
+      shareButton.textContent = "Copying...";
+      
+      await navigator.clipboard.writeText(cachedUrl);
+      showToast('📋 Link copied to clipboard', 'success');
+    } catch (clipboardError) {
+      console.warn("Failed to copy to clipboard:", clipboardError);
+      showToast('📋 Link ready to copy', 'success');
+      console.log('Post URL:', cachedUrl);
+    } finally {
+      shareButton.disabled = false;
+      shareButton.textContent = "Share Challenge";
+    }
+    return;
+  }
+
+  // First time sharing this challenge - create new post
   try {
     shareButton.disabled = true;
     shareButton.textContent = "Sharing...";
@@ -297,16 +326,31 @@ async function shareChallenge() {
     const result = await response.json();
     console.log("Share result:", result);
 
-    if (result.status === "success") {
-      alert(`🎯 Challenge shared successfully! Post ID: ${result.postId || 'unknown'}`);
+    if (result.status === "success" && result.postId) {
+      // Create and cache the post URL
+      const subredditName = result.subredditName || 'unknown';
+      const postUrl = `https://reddit.com/r/${subredditName}/comments/${result.postId}`;
+      
+      // Cache the URL for future clicks
+      sharedPostCache.set(challengeKey, postUrl);
+      
+      try {
+        await navigator.clipboard.writeText(postUrl);
+        showToast('🎯 Challenge shared! Link copied to clipboard', 'success');
+      } catch (clipboardError) {
+        console.warn("Failed to copy to clipboard:", clipboardError);
+        showToast('🎯 Challenge shared successfully!', 'success');
+        // Still show the URL in console for manual copying
+        console.log('Post URL:', postUrl);
+      }
     } else {
-      alert(`Failed to share: ${result.message || 'Unknown error'}`);
+      showToast(`Failed to share: ${result.message || 'Unknown error'}`, 'error');
     }
 
   } catch (error) {
     console.error("Error sharing challenge:", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    alert(`Failed to share challenge: ${errorMessage}`);
+    showToast(`Failed to share challenge: ${errorMessage}`, 'error');
   } finally {
     shareButton.disabled = false;
     shareButton.textContent = "Share Challenge";
@@ -365,6 +409,54 @@ function displayLeaderboard(leaderboard: any[]) {
 // Show error message
 function showError(message: string) {
   loadingElement.innerHTML = `<p style="color: red;">${message}</p>`;
+}
+
+// Show toast notification
+function showToast(message: string, type: 'success' | 'error' = 'success') {
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  
+  // Add styles
+  Object.assign(toast.style, {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    backgroundColor: type === 'success' ? '#4CAF50' : '#f44336',
+    color: 'white',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    zIndex: '10000',
+    fontSize: '14px',
+    fontWeight: '500',
+    maxWidth: '400px',
+    wordWrap: 'break-word',
+    transform: 'translateX(100%)',
+    transition: 'transform 0.3s ease-in-out',
+    opacity: '0'
+  });
+  
+  // Add to page
+  document.body.appendChild(toast);
+  
+  // Animate in
+  setTimeout(() => {
+    toast.style.transform = 'translateX(0)';
+    toast.style.opacity = '1';
+  }, 10);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.style.transform = 'translateX(100%)';
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
 }
 
 // Display post statistics

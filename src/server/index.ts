@@ -23,6 +23,7 @@ import {
   getPostStats,
   updatePostStats,
   updateImageStats,
+  getRandomPostTitle,
 } from "./game/utils";
 
 
@@ -380,9 +381,13 @@ router.post<
 
     console.log("Stored challenge data in Redis");
 
+    console.log("About to call getRandomPostTitle()...");
+    const postTitle = getRandomPostTitle();
+    console.log("Generated post title:", postTitle);
+    
     console.log("Creating new post with data:", {
       subredditName,
-      title: "🎯 SubGuessr Challenge - Can you guess this sub?",
+      title: postTitle,
       challengeId,
     });
 
@@ -394,13 +399,16 @@ router.post<
         description: 'Can you guess which subreddit this image is from?',
         heading: 'Play SubGuessr!',
         appIconUri: 'default-icon.png',
+        buttonAppearance: 'secondary', // Try different button appearance
+        buttonColor: '#FF6B35', // Try custom orange color
+        buttonStyle: 'orange', // Try custom style
       },
       postData: {
         challengeId,
         shared: true,
       },
       subredditName: subredditName,
-      title: "🎯 SubGuessr Challenge - Can you guess this sub?",
+      title: postTitle,
     });
 
     console.log("Created new post:", newPost?.id);
@@ -430,6 +438,7 @@ router.post<
       status: "success",
       message: "Challenge shared successfully",
       postId: newPost?.id,
+      subredditName: subredditName,
     });
   } catch (error) {
     console.error("Error sharing challenge - Full details:", error);
