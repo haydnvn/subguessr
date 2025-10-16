@@ -334,12 +334,13 @@ async function shareChallenge() {
       // Cache the URL for future clicks
       sharedPostCache.set(challengeKey, postUrl);
       
+      // Always copy to clipboard on first share (when creating the post)
       try {
         await navigator.clipboard.writeText(postUrl);
         showToast('🎯 Challenge shared! Link copied to clipboard', 'success');
       } catch (clipboardError) {
         console.warn("Failed to copy to clipboard:", clipboardError);
-        showToast('🎯 Challenge shared successfully!', 'success');
+        showToast('🎯 Challenge shared! Link ready to copy', 'success');
         // Still show the URL in console for manual copying
         console.log('Post URL:', postUrl);
       }
