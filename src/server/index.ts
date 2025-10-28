@@ -308,6 +308,35 @@ router.get<
   }
 });
 
+// New endpoint with cache busting
+router.get<
+  {},
+  { subreddits: string[]; version: string; timestamp: number } | { status: string; message: string }
+>("/api/subreddits-v2", async (_req, res): Promise<void> => {
+  try {
+    const { IMAGE_SUBREDDITS } = await import("./game/utils");
+    
+    // Add aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    res.json({
+      subreddits: IMAGE_SUBREDDITS,
+      version: "0.0.9",
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    console.error("Error fetching subreddits v2:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch subreddits",
+    });
+  }
+});
+
 router.post<
   {},
   { imageStats: any } | { status: string; message: string },

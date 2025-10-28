@@ -5,6 +5,10 @@ import {
   LeaderboardResponse,
 } from "../shared/types/api";
 
+// Version check - should appear immediately when client loads
+const CLIENT_VERSION = "0.0.9-" + Date.now();
+console.log("🚀 SubGuessr Client", CLIENT_VERSION, "Loading at", new Date().toISOString());
+
 // DOM Elements
 const usernameElement = document.getElementById("username") as HTMLSpanElement;
 const userScoreElement = document.getElementById("user-score") as HTMLSpanElement;
@@ -41,12 +45,52 @@ let sharedPostCache: Map<string, string> = new Map(); // Maps challenge key to p
 // Load available subreddits for autocomplete
 async function loadSubreddits() {
   try {
-    const response = await fetch("/api/subreddits");
+    // Try new endpoint first, fallback to old one
+    const cacheBuster = Date.now();
+    let response;
+    try {
+      response = await fetch(`/api/subreddits-v2?cb=${cacheBuster}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+    } catch (error) {
+      console.warn("V2 endpoint failed, trying v1:", error);
+      response = await fetch(`/api/subreddits?v=${cacheBuster}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+    }
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
     availableSubreddits = data.subreddits || [];
+    
+    // Log API response details
+    console.log("📡 API Response:", {
+      endpoint: response.url,
+      version: data.version || "unknown",
+      timestamp: data.timestamp || "unknown",
+      subredditCount: availableSubreddits.length
+    });
+    
+    // Debug logging - UPDATED VERSION 0.0.9
+    console.log("🚀 CLIENT VERSION", CLIENT_VERSION, "- Loaded subreddits:", availableSubreddits.length);
+    console.log("🎯 Contains 'weird':", availableSubreddits.includes('weird'));
+    console.log("🎯 Contains 'maplestory':", availableSubreddits.includes('maplestory'));
+    console.log("🎯 Contains 'trees':", availableSubreddits.includes('trees'));
+    console.log("🎯 Contains 'decks':", availableSubreddits.includes('decks'));
+    console.log("🎯 Contains 'okbuddyretard':", availableSubreddits.includes('okbuddyretard'));
+    console.log("🔍 Subreddits starting with 'wei':", availableSubreddits.filter(s => s.startsWith('wei')));
+    console.log("🔍 First 10 subreddits:", availableSubreddits.slice(0, 10));
+    console.log("🔍 Last 10 subreddits:", availableSubreddits.slice(-10));
   } catch (error) {
     console.error("Error loading subreddits:", error);
     availableSubreddits = [];

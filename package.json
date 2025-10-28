@@ -7,6 +7,8 @@
   "scripts": {
     "postinstall": "npm run build",
     "generate-subreddits": "node scripts/generate-subreddits.js",
+    "fetch-subreddits": "node scripts/fetch-top-subreddits.js",
+    "update-subreddits": "npm run fetch-subreddits && npm run generate-subreddits",
     "prebuild": "npm run generate-subreddits",
     "build:client": "cd src/client && vite build",
     "build:server": "cd src/server && vite build",
